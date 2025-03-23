@@ -13,12 +13,12 @@ on:
           - rpi-3
           - rpi-4
           - rpi-5
-        default: rpi-4
+        default: rpi-5
       include_docker:
         description: |
           是否编译 Docker 插件
         required: true
-        default: 'no'
+        default: 'yes'
         type: choice
         options:
           - 'yes'
@@ -26,7 +26,7 @@ on:
       size:
         description: '请输入要编译固件大小 单位(MB)'
         required: true
-        default: '1024'
+        default: '2048'
 
 
 jobs:
@@ -62,6 +62,11 @@ jobs:
           fi
           include_docker="${{ github.event.inputs.include_docker }}"
           size="${{ github.event.inputs.size }}"
+
+          # 创建自定义文件目录（可选）
+          mkdir -p ${{ github.workspace }}/files/etc
+          echo "dtparam=pciex1" > ${{ github.workspace }}/files/boot/firmware/config.txt
+          
           IFS=',' read -r -a profile_array <<< "$profiles"
           for profile in "${profile_array[@]}"; do
             echo "Building for profile: $profile"
