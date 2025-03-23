@@ -15,8 +15,7 @@ on:
           - rpi-5
         default: rpi-5
       include_docker:
-        description: |
-          是否编译 Docker 插件
+        description: "是否编译 Docker 插件"
         required: true
         default: 'yes'
         type: choice
@@ -26,8 +25,15 @@ on:
       size:
         description: '请输入要编译固件大小 单位(MB)'
         required: true
-        default: '2048'
-
+        default: '1024'
+      include_pcie_eth_m2:
+        description: "是否支持 PCIe_TO_ETH_M.2_HAT+"
+        required: true
+        default: 'yes'
+        type: choice
+        options:
+          - 'yes'
+          - 'no'
 
 jobs:
   build:
@@ -62,27 +68,22 @@ jobs:
           fi
           include_docker="${{ github.event.inputs.include_docker }}"
           size="${{ github.event.inputs.size }}"
-
-          # 创建自定义文件目录（可选）
-          mkdir -p ${{ github.workspace }}/files/etc
+          include_pcie_eth_m2="${{ github.event.inputs.include_pcie_eth_m2 }}"
+          # 创建自定义文件目录并启用 PCIe
+          mkdir -p ${{ github.workspace }}/files/boot/firmware
           echo "dtparam=pciex1" > ${{ github.workspace }}/files/boot/firmware/config.txt
-          
-          IFS=',' read -r -a profile_array <<< "$profiles"
-          for profile in "${profile_array[@]}"; do
-            echo "Building for profile: $profile"
-            
-            docker run --rm -i \
-              --user root \
-              -v "${{ github.workspace }}/bin:/home/build/immortalwrt/bin" \
-              -v "${{ github.workspace }}/files:/home/build/immortalwrt/files" \
-              -v "${{ github.workspace }}/raspberrypi/24.10/build.sh:/home/build/openwrt/build.sh" \
-              -e PROFILE=$profile \
-              -e INCLUDE_DOCKER=$include_docker \
-              -e ROOTSIZE=$size \
-              immortalwrt/imagebuilder:$tag /bin/bash /home/build/openwrt/build.sh
-          done
+          docker run --rm -i \
+            --user root \
+            -v "${{ github.workspace }}/bin:/home/build/immortalwrt/bin" \
+            -v "${{ github.workspace }}/files:/home/build/immortalwrt/files" \
+            -v "${{ github.workspace }}/raspberrypi/24.10/build.sh:/home/build/openwrt/build.sh" \
+            -e PROFILE=$profiles \
+            -e INCLUDE_DOCKER=$include_docker \
+            -e ROOTSIZE=$size \
+            -e INCLUDE_PCIE_ETH_M2=$include_pcie_eth_m2 \
+            immortalwrt/imagebuilder:$tag /bin/bash /home/build/openwrt/build.sh
           ls ${{ github.workspace }}/bin/targets/bcm27xx/${{ env.cpu }}
-      
+
       - name: Generate Firmware SHA-256
         run: |
           cp ${{ github.workspace }}/bin/targets/bcm27xx/${{ env.cpu }}/*squashfs-factory.img.gz  ${{ github.workspace }}
@@ -90,16 +91,19 @@ jobs:
             sha256sum "$file" > "$file.sha256"
             sha256sum -c "$file.sha256"
           done
-      
+
       - name: Create info
         run: |
           if [ "${{ github.event.inputs.include_docker }}" == "yes" ]; then
             extra_content="### 默认带docker"
             echo -e "\n $extra_content" >> ${{ github.workspace }}/info.md
           else
-            echo -e "NO docker"
+            echo -e "NO docker" >> ${{ github.workspace }}/info.md
           fi
- 
+          if [ "${{ github.event.inputs.include_pcie_eth_m2 }}" == "yes" ]; then
+            echo -e "\n### 支持 PCIe_TO_ETH_M.2_HAT+ (Realtek 以太网和 NVMe)" >> ${{ github.workspace }}/info.md
+          fi
+
       - name: Upload ImmortalWrt as release assets
         uses: softprops/action-gh-release@v2.2.1
         with:
