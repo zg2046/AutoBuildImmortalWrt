@@ -25,7 +25,7 @@ on:
       size:
         description: '请输入要编译固件大小 单位(MB)'
         required: true
-        default: '1024'
+        default: '2048'
       include_pcie_eth_m2:
         description: "是否支持 PCIe_TO_ETH_M.2_HAT+"
         required: true
