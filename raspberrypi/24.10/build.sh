@@ -27,8 +27,11 @@ PACKAGES="$PACKAGES luci-i18n-passwall-zh-cn"
 PACKAGES="$PACKAGES luci-app-openclash"
 PACKAGES="$PACKAGES luci-i18n-homeproxy-zh-cn"
 PACKAGES="$PACKAGES openssh-sftp-server"
-PACKAGES="$PACKAGES luci-app-minidlna-zh-cn"	
-#PACKAGES="$PACKAGES luci-app-airplay2"
+PACKAGES="$PACKAGES luci-app-minidlna-zh-cn"
+PACKAGES="$PACKAGES gpioctl-sysfs" # 用户空间 GPIO 控制（可选）
+PACKAGES="$PACKAGES gpiod-tools" # 更现代的 GPIO 工具（可选）
+PACKAGES="$PACKAGES kmod-gpio-button-hotplug" # 按钮支持
+PACKAGES="$PACKAGES kmod-leds-gpio" # LED 支持
 
 # 增加几个必备组件 方便用户安装iStore
 PACKAGES="$PACKAGES fdisk"
