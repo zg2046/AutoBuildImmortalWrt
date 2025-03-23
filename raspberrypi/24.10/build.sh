@@ -4,10 +4,11 @@ echo "Building for profile: $PROFILE"
 echo "Include Docker: $INCLUDE_DOCKER"
 # yml 传入的固件大小 ROOTFS_PARTSIZE
 echo "Building for ROOTFS_PARTSIZE: $ROOTSIZE"
+# yml 传入的 PCIe_TO_ETH_M.2_HAT+ 支持参数
+echo "Include PCIe_TO_ETH_M.2_HAT+ support: $INCLUDE_PCIE_ETH_M2"
 
 # 输出调试信息
 echo "$(date '+%Y-%m-%d %H:%M:%S') - Starting build process..."
-
 
 # 定义所需安装的包列表
 PACKAGES=""
@@ -19,7 +20,7 @@ PACKAGES="$PACKAGES luci-app-argon-config"
 PACKAGES="$PACKAGES luci-i18n-argon-config-zh-cn"
 PACKAGES="$PACKAGES luci-i18n-diskman-zh-cn"
 
-#24.10
+# 24.10
 PACKAGES="$PACKAGES luci-i18n-package-manager-zh-cn"
 PACKAGES="$PACKAGES luci-i18n-ttyd-zh-cn"
 PACKAGES="$PACKAGES luci-i18n-passwall-zh-cn"
@@ -32,13 +33,19 @@ PACKAGES="$PACKAGES fdisk"
 PACKAGES="$PACKAGES script-utils"
 PACKAGES="$PACKAGES luci-i18n-samba4-zh-cn"
 
-
 # 判断是否需要编译 Docker 插件
 if [ "$INCLUDE_DOCKER" = "yes" ]; then
     PACKAGES="$PACKAGES luci-i18n-dockerman-zh-cn"
     echo "Adding package: luci-i18n-dockerman-zh-cn"
 fi
 
+# 判断是否需要支持 PCIe_TO_ETH_M.2_HAT+
+if [ "$INCLUDE_PCIE_ETH_M2" = "yes" ]; then
+    PACKAGES="$PACKAGES kmod-r8169"         # Realtek 以太网驱动
+    PACKAGES="$PACKAGES kmod-nvme"          # NVMe 支持
+    PACKAGES="$PACKAGES pciutils"           # PCIe 工具（如 lspci）
+    echo "Adding packages for PCIe_TO_ETH_M.2_HAT+: kmod-r8169 kmod-nvme pciutils"
+fi
 
 # 构建镜像
 echo "$(date '+%Y-%m-%d %H:%M:%S') - Building image with the following packages:"
